@@ -30,7 +30,7 @@ class Empleado:
 async def root():
     return {"message": "¡Bienvenido a la API de Recursos Humanos!"}
 
-# 📌 Buscar empleado por cédula o nombre
+# Buscar empleado por cédula o nombre
 @app.get("/empleado")
 async def obtener_empleado(cedula: Optional[str] = None, nombre: Optional[str] = None, db=Depends(get_db)):
     if cedula:
@@ -45,4 +45,19 @@ async def obtener_empleado(cedula: Optional[str] = None, nombre: Optional[str] =
     if not empleado:
         raise HTTPException(status_code=404, detail="Empleado no encontrado.")
     return dict(empleado)
+
+# Buscar empleados por dependencia
+@app.get("/empleados/dependencia")
+async def obtener_empleados_por_dependencia(dependencia_codigo:Optional[str] = None, db=Depends(get_db)):
+    if not dependencia_codigo:
+        raise HTTPException(status_code=400, detail="Debe Proporcionar el código de dependencia.")
+    
+    query = "SELECT * FROM empleados WHERE dependencia_codigo = $1"
+    empleados = await db.fetch(query, dependencia_codigo)
+    
+    if not empleados:
+        raise HTTPException(status_code=404, detail="No se encontraron empleados en esta dependencia.")
+
+    return [dict(emp) for emp in empleados]
+
 
