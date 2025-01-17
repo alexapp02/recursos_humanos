@@ -60,4 +60,25 @@ async def obtener_empleados_por_dependencia(dependencia_codigo:Optional[str] = N
 
     return [dict(emp) for emp in empleados]
 
+# Buscar cumpleaños de un empleado
+@app.get("/cumpleaños/empleado")
+async def obtener_cumpleaños_empleado(cedula: Optional[str] = None, nombre: Optional[str] = None, db=Depends(get_db)):
+    if cedula:
+        query = "SELECT * FROM empleados WHERE cedula = $1"
+        empleado = await db.fetchrow(query, cedula)
+    elif nombre:
+        query = "SELECT * FROM empleados WHERE nombre_completo ILIKE $1"
+        empleado = await db.fetchrow(query, f"%{nombre}%")
+    else:
+        raise HTTPException(status_code=400, detail="Debe proporcionar cédula o nombre.")
+    
+    if not empleado:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado.")
+    return {"nombre": empleado["nombre_completo"], "fecha_nacimiento": empleado["fecha_nacimiento"]}
 
+# Buscar empleados que cumplen años en una fecha dada
+@app.get("/cumpleaños/{fecha}")
+async def obtener_cumpleañeros(fecha: str, db=Depends(get_db)):
+    query = "SELECT * FROM empleados WHERE DATE_PART('month', fecha_nacimiento) = DATE_PART('month', $1) AND DATE_PART('day', fecha_nacimiento) = DATE_PART('day', $1)"
+    empleados = await db.fetch(query, fecha)
+    return [dict(emp) for emp in empleados]
