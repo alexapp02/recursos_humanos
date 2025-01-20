@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
 import asyncpg
 from typing import List, Optional
+from datetime import datetime
+
 
 app = FastAPI()
 
@@ -16,13 +18,13 @@ async def get_db():
 
 # Modelo de empleado
 class Empleado:
-    def __init__(self, cedula, nombre_completo, correo_interno, fecha_nacimiento, telefono_interno, dependencia_codigo, cargo_codigo):
+    def __init__(self, cedula, nombre_completo, correo_interno, fecha_nacimiento, telefono_interno, fecha, cargo_codigo):
         self.cedula = cedula
         self.nombre_completo = nombre_completo
         self.correo_interno = correo_interno
         self.fecha_nacimiento = fecha_nacimiento
         self.telefono_interno = telefono_interno
-        self.dependencia_codigo = dependencia_codigo
+        self.fecha = fecha
         self.cargo_codigo = cargo_codigo
 
 # Ruta principal
@@ -48,12 +50,12 @@ async def obtener_empleado(cedula: Optional[str] = None, nombre: Optional[str] =
 
 # Buscar empleados por dependencia
 @app.get("/empleados/dependencia")
-async def obtener_empleados_por_dependencia(dependencia_codigo:Optional[str] = None, db=Depends(get_db)):
-    if not dependencia_codigo:
+async def empleados_dependencia(fecha:Optional[str] = None, db=Depends(get_db)):
+    if not fecha:
         raise HTTPException(status_code=400, detail="Debe Proporcionar el código de dependencia.")
     
-    query = "SELECT * FROM empleados WHERE dependencia_codigo = $1"
-    empleados = await db.fetch(query, dependencia_codigo)
+    query = "SELECT * FROM empleados WHERE fecha = $1"
+    empleados = await db.fetch(query, fecha)
     
     if not empleados:
         raise HTTPException(status_code=404, detail="No se encontraron empleados en esta dependencia.")
@@ -61,13 +63,13 @@ async def obtener_empleados_por_dependencia(dependencia_codigo:Optional[str] = N
     return [dict(emp) for emp in empleados]
 
 # Buscar cumpleaños de un empleado
-@app.get("/cumpleaños/empleado")
-async def obtener_cumpleaños_empleado(cedula: Optional[str] = None, nombre: Optional[str] = None, db=Depends(get_db)):
+@app.get("/birthday")
+async def birthday_empleado(cedula: Optional[str] = None, nombre: Optional[str] = None, db=Depends(get_db)):
     if cedula:
         query = "SELECT * FROM empleados WHERE cedula = $1"
         empleado = await db.fetchrow(query, cedula)
     elif nombre:
-        query = "SELECT * FROM empleados WHERE nombre_completo ILIKE $1"
+        query = "SELECT * FROM empleados WHERE unaccent (nombre_completo) ILIKE unaccent($1)"
         empleado = await db.fetchrow(query, f"%{nombre}%")
     else:
         raise HTTPException(status_code=400, detail="Debe proporcionar cédula o nombre.")
@@ -77,8 +79,34 @@ async def obtener_cumpleaños_empleado(cedula: Optional[str] = None, nombre: Opt
     return {"nombre": empleado["nombre_completo"], "fecha_nacimiento": empleado["fecha_nacimiento"]}
 
 # Buscar empleados que cumplen años en una fecha dada
-@app.get("/cumpleaños/{fecha}")
-async def obtener_cumpleañeros(fecha: str, db=Depends(get_db)):
-    query = "SELECT * FROM empleados WHERE DATE_PART('month', fecha_nacimiento) = DATE_PART('month', $1) AND DATE_PART('day', fecha_nacimiento) = DATE_PART('day', $1)"
-    empleados = await db.fetch(query, fecha)
+@app.get("/birthday/empleados")
+async def obtener_cumpleanios(fecha: Optional[str] = None, db=Depends(get_db)):
+    if not fecha:
+        raise HTTPException(status_code=400, detail="Debe proporcionar la fecha en formato YYYY-MM-DD.")
+
+    # Validar formato de fecha
+    try:
+        fecha_obj = datetime.strptime(fecha, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD.")
+
+    # Extraer mes y día para la consulta
+    mes = fecha_obj.month
+    dia = fecha_obj.day
+
+    # Consulta a la base de datos
+    query = """
+        SELECT *
+        FROM empleados
+        WHERE EXTRACT(MONTH FROM fecha_nacimiento) = $1
+          AND EXTRACT(DAY FROM fecha_nacimiento) = $2
+    """
+    try:
+        empleados = await db.fetch(query, mes, dia)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al consultar la base de datos: {str(e)}")
+
+    if not empleados:
+        raise HTTPException(status_code=404, detail="No se encontraron empleados con ese cumpleaños.")
+
     return [dict(emp) for emp in empleados]
