@@ -1,14 +1,49 @@
-// scripts.js
-function buscarEmpleado() {
-    const template = document.getElementById("template-buscar-Empleado");
-    const clone = template.content.cloneNode(true);
-    document.getElementById("submenu").innerHTML = ""; // Limpiar contenido previo
-    document.getElementById("submenu").appendChild(clone);
-    document.getElementById("resultado").innerHTML = "";
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleButton = document.getElementById('toggle-sidebar');
 
-    // Mostrar campos inmediatamente basado en el valor actual
+    // Alternar la clase "hidden" en el sidebar
+    sidebar.classList.toggle('hidden');
+
+    // Cambiar el texto del botón según el estado del sidebar
+    toggleButton.textContent = sidebar.classList.contains('hidden') ? '▶' : '◀';
+}
+
+
+
+function buscarEmpleado() {
+    // Seleccionar el template
+    const template = document.getElementById("template-buscar-empleado");
+
+    // Verificar si el template existe
+    if (!template) {
+        console.error("No se encontró el template con id 'template-buscar-empleado'.");
+        return;
+    }
+
+    // Clonar el contenido del template
+    const clone = template.content.cloneNode(true);
+
+    // Insertar el contenido en el contenedor
+    const submenu = document.getElementById("submenu");
+    if (!submenu) {
+        console.error("No se encontró el contenedor con id 'submenu'.");
+        return;
+    }
+
+    submenu.innerHTML = ""; // Limpiar el contenido previo
+    submenu.appendChild(clone);
+
+    // Limpiar cualquier resultado previo
+    const resultado = document.getElementById("resultado");
+    if (resultado) {
+        resultado.innerHTML = "";
+    }
+
+    // Mostrar el campo de búsqueda por defecto (cédula)
     mostrarCamposBusqueda();
 }
+
 
 function mostrarCamposBusqueda() {
     const criterio = document.getElementById("criterio").value;
@@ -29,7 +64,6 @@ function mostrarCamposBusqueda() {
 
     campoBusqueda.innerHTML = campoHTML;
 }
-
 
 async function consultarEmpleado() {
     const criterio = document.getElementById("criterio").value;
@@ -55,10 +89,7 @@ async function consultarEmpleado() {
         const response = await fetch(url);
         if (response.ok) {
             const data = await response.json();
-            document.getElementById("resultado").innerHTML = `
-                <h3>Resultado:</h3>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
-            `;
+            mostrarTabla([data], "resultado"); // Mostrar un solo resultado en tabla
         } else {
             const error = await response.json();
             document.getElementById("resultado").innerHTML = `
@@ -116,10 +147,7 @@ async function consultarPorArea() {
         const response = await fetch(`http://127.0.0.1:8000/empleados/dependencia?dependencia_codigo=${area}`);
         if (response.ok) {
             const data = await response.json();
-            document.getElementById("resultado").innerHTML = `
-                <h3>Resultado:</h3>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
-            `;
+            mostrarTabla(data, "resultado"); // Mostrar lista de resultados en tabla
         } else {
             const error = await response.json();
             document.getElementById("resultado").innerHTML = `
@@ -134,6 +162,7 @@ async function consultarPorArea() {
         `;
     }
 }
+
 
 function mostrarCumpleaños() {
     const template = document.getElementById("template-buscar-cumpleanos");
@@ -190,9 +219,36 @@ async function consultarCumpleañosEmpleado() {
         const response = await fetch(url);
         if (response.ok) {
             const data = await response.json();
+
+            // Obtener la fecha de nacimiento y reemplazar el año por el actual
+            const fechaNacimientoOriginal = new Date(data.fecha_nacimiento);
+            const hoy = new Date();
+            const añoActual = hoy.getFullYear();
+            const fechaCumpleañosEsteAño = new Date(
+                añoActual,
+                fechaNacimientoOriginal.getMonth(),
+                fechaNacimientoOriginal.getDate()
+            );
+
+            // Calcular la edad
+            const edad = añoActual - fechaNacimientoOriginal.getFullYear();
+            const cumpleHoy =
+                hoy.getMonth() === fechaCumpleañosEsteAño.getMonth() &&
+                hoy.getDate() === fechaCumpleañosEsteAño.getDate();
+
+            // Crear el mensaje de cumpleaños
+            const mensajeCumpleaños = cumpleHoy
+                ? `🎉 ¡Feliz cumpleaños! Hoy celebramos tu día especial. 🎂`
+                : `Tu cumpleaños es el ${fechaCumpleañosEsteAño.toLocaleDateString("es-ES")}.`;
+
+            // Mostrar la tarjeta de cumpleaños
             document.getElementById("resultado").innerHTML = `
-                <h3>Resultado:</h3>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
+                <div class="birthday-card">
+                    <img src="cake.png" alt="Torta de cumpleaños" class="cake-img">
+                    <h2>🎉 ¡Feliz Cumpleaños, ${data.nombre}! 🎉</h2>
+                    <p>${mensajeCumpleaños}</p>
+                    <p>🎂 Edad: ${edad} años</p>
+                </div>
             `;
         } else {
             const error = await response.json();
@@ -225,15 +281,62 @@ async function consultarCumpleañosPorFecha() {
 
     try {
         const response = await fetch(`http://127.0.0.1:8000/birthday/empleados?fecha=${fecha}`);
-        const data = await response.json();
-        document.getElementById("resultado").innerHTML = `
-            <h4 class="text-success">Resultado:</h4>
-            <pre>${JSON.stringify(data, null, 2)}</pre>
-        `;
+        if (response.ok) {
+            const data = await response.json();
+            mostrarTabla(data, "resultado"); // Mostrar cumpleaños en tabla
+        } else {
+            const error = await response.json();
+            document.getElementById("resultado").innerHTML = `
+                <h4>Error:</h4>
+                <p>${error.detail}</p>
+            `;
+        }
     } catch (err) {
         document.getElementById("resultado").innerHTML = `
-            <h4 class="text-danger">Error:</h4>
+            <h4>Error:</h4>
             <p>No se pudo conectar con el servidor.</p>
         `;
     }
+}
+
+
+function mostrarTabla(data, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = ''; // Limpiar el contenido previo
+
+    if (data.length === 0) {
+        container.innerHTML = '<p>No se encontraron resultados.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.classList.add('table', 'table-striped', 'table-bordered'); // Estilo Bootstrap
+
+    const headers = Object.keys(data[0]);
+
+    // Crear encabezados
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Crear filas
+    const tbody = document.createElement('tbody');
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+            const td = document.createElement('td');
+            td.textContent = row[header];
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    container.appendChild(table);
 }

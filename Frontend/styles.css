@@ -1,18 +1,25 @@
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Montserrat', Arial, sans-serif; /* Montserrat como principal, Arial como respaldo */
     display: flex;
 }
 
+
+/* Sidebar */
 .sidebar {
-    width: 250px;
-    background-color: #2c3e50;
-    color: white;
+    width: 250px; /* Ancho fijo */
     height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
+    background: linear-gradient(to bottom, #34495e, #146c43);
+    color: white;
     padding: 20px 10px;
+    position: fixed; /* Asegura que siempre se mantenga fijo */
+    left: 0;
+    top: 0;
+    z-index: 1000; /* Por encima del contenido */
+    transition: transform 0.3s ease;
+}
+.sidebar.hidden {
+    transform: translateX(-250px);
 }
 
 .sidebar h2 {
@@ -20,82 +27,249 @@ body {
     text-align: center;
     margin-bottom: 20px;
     border-bottom: 2px solid white;
-    padding-bottom: 10px;
+}
+
+.sidebar details summary {
+    font-weight: bold;
+    margin-bottom: 15px;
+    cursor: pointer;
 }
 
 .sidebar a {
     color: white;
     text-decoration: none;
+    margin: 5px 0;
     display: block;
-    margin: 10px 0;
     padding: 10px;
     border-radius: 5px;
+    font-size: 14px;
 }
 
 .sidebar a:hover {
     background-color: #34495e;
 }
 
+/* Botón de alternar */
+#toggle-sidebar {
+    position: fixed;
+    top: 50%;
+    left: 260px; /* Inicialmente junto al sidebar */
+    transform: translateY(-50%);
+    background: linear-gradient(to bottom, #34495e, #146c43); /* Degradado */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.4s ease-in-out, background 0.3s;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Cuando el sidebar está oculto, mover el botón */
+.sidebar.hidden ~ #toggle-sidebar {
+    transform: translate(-260px, -50%);
+}
+
+/* Efecto hover */
+#toggle-sidebar:hover {
+    background: linear-gradient(to bottom, #34495e, #146c43); /* Degradado */
+}
+
+/* HEADER */
 .header {
     position: fixed;
     top: 0;
-    left: 250px;
-    width: calc(100% - 250px);
+    left: 250px; /* Espacio inicial cuando el sidebar está visible */
+    width: calc(100% - 250px); /* Resto del espacio cuando el sidebar está visible */
     background-color: #ecf0f1;
-    padding: 20px;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #bdc3c7;
-    z-index: 10;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s ease, width 0.3s ease; /* Transiciones añadidas */
 }
 
+/* Ajuste cuando el sidebar está oculto */
+.sidebar.hidden + .header {
+    left: 0; /* Header ocupa toda la pantalla */
+    width: 100%; /* Expandir el ancho */
+}
+/* TÍTULO */
 .header .title {
-    background-color: #34495e;
+    background: linear-gradient(to bottom, #34495e, #146c43);
     color: white;
     padding: 10px 20px;
     border-radius: 20px;
     font-size: 20px;
+    text-align: center;
 }
 
+/* USER BOX */
 .header .user-box {
     display: flex;
     align-items: center;
-    gap: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(to bottom, #34495e, #146c43); /* Degradado */
+    border-radius: 20px;
+    color: white;
+    position: relative; /* Necesario para el menú desplegable */
+    gap: 15px;
+    max-width: 300px; /* Ancho máximo */
+    flex-shrink: 0;
 }
 
-.header .user-box img {
+/* CONTENIDO DEL USUARIO */
+.header .user-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    flex-grow: 1;
+}
+
+.header .user-content img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    border: 2px solid white;
 }
 
+.header .user-content div {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    line-height: 1.2;
+    word-wrap: break-word;
+}
+
+/* FLECHA DESPLEGABLE */
+.header .user-content summary {
+    cursor: pointer; /* Cambia el cursor a pointer */
+    font-size: 16px;
+    margin-left: auto; /* Alinear la flecha a la derecha */
+}
+
+/* MENÚ DESPLEGABLE */
 .header .user-box .dropdown-menu {
-    background-color: #34495e;
+    display: none; /* Ocultar el menú por defecto */
+    background: linear-gradient(to bottom, #34495e, #146c43); /* Degradado */
     color: white;
+    border-radius: 10px;
+    position: absolute;
+    top: 100%; /* Colocar debajo del user-box */
+    right: 0;
+    margin-top: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1001; /* Evita que el menú quede detrás de otros elementos */
+    min-width: 200px;
+    padding: 0;
 }
 
+/* Mostrar el menú cuando el <details> está abierto */
+.header .user-box details[open] .dropdown-menu {
+    display: block; /* Mostrar el menú cuando el <details> está abierto */
+}
+
+/* ESTILO OPCIONES */
 .header .user-box .dropdown-menu a {
     color: white;
+    padding: 10px 15px;
+    display: block;
+    text-decoration: none;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.header .user-box .dropdown-menu a:last-child {
+    border-bottom: none;
+}
+
+.header .user-box .dropdown-menu a:hover {
+    background-color: #146c43;
+}
+
+/* CONTENIDO */
 .content {
-    margin-left: 250px;
-    margin-top: 100px; /* Altura del header */
+    margin-left: 250px; /* Espacio reservado para el sidebar */
+    margin-top: 80px; /* Ajuste al tamaño del header */
     padding: 20px;
-    width: calc(100% - 250px);
-    box-sizing: border-box;
+    transition: margin-left 0.3s ease;
 }
 
-.content .menu-box {
+.sidebar.hidden + .content {
+    margin-left: 0; /* Ajuste cuando el sidebar está oculto */
+}
+
+
+
+/* Caja del contenido del menú */
+.menu-box {
     background-color: #ecf0f1;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+    display: block; /* Cambio de inline-block a block */
+    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+    margin: 20px 0; /* Separación vertical */
+}
+/* Tablas dentro de .menu-box */
+.menu-box table {
+    width: auto; /* La tabla se ajustará automáticamente */
+    max-width: 100%; /* Evita que la tabla desborde */
+    border-collapse: collapse;
+    font-size: 14px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+    /* Margen de separación con otros elementos */
+    margin-right: 20px;
 }
 
-.content .menu-box h2 {
-    margin-bottom: 20px;
+.menu-box table thead {
+    background-color: #146c43;
+    color: white;
+}
+
+.menu-box table th,
+.menu-box table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #bdc3c7;
+}
+
+.menu-box table th {
+    font-weight: bold;
+}
+
+.menu-box table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.menu-box table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Ajuste responsivo */
+@media (max-width: 768px) {
+    .menu-box {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .menu-box table {
+        font-size: 12px;
+    }
 }
 
 #campo-busqueda label, #campo-cumple-busqueda label {
@@ -110,5 +284,47 @@ body {
     padding: 10px;
     border: 1px solid #bdc3c7;
     border-radius: 5px;
+}
+
+.btn-primary {
+    background: linear-gradient(to bottom, #34495e, #146c43); /* Degradado inicial */
+    color: #ffffff;
+    border: 1px solid #146c43; /* Borde del degradado */
+}
+
+.btn-primary:hover {
+    background: #287a3b; /* Fondo verde al pasar el mouse */
+    border-color: #287a3b ; /* Borde verde al pasar el mouse */
+    color: #fff;
+}
+
+.birthday-card {
+    background: linear-gradient(to bottom, #ffeaa7, #fab1a0);
+    border: 2px solid #fd79a8;
+    border-radius: 15px;
+    padding: 20px;
+    max-width: 400px;
+    margin: 20px auto;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-family: 'Montserrat', Arial, sans-serif;
+}
+
+.birthday-card .cake-img {
+    width: 100px;
+    margin-bottom: 15px;
+}
+
+.birthday-card h2 {
+    color: #d63031;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.birthday-card p {
+    color: #2d3436;
+    margin: 5px 0;
+    font-size: 16px;
+    line-height: 1.5;
 }
 

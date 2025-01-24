@@ -5,38 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recursos Humanos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
         <h2>Menú</h2>
-        <a href="javascript:void(0);" onclick="buscarEmpleado()">Datos de un Empleado</a>
-        <a href="javascript:void(0);" onclick="buscarCumpleañosPorFecha()">Fecha de Interés</a>
-        <a href="javascript:void(0);" onclick="buscarPorArea()">Datos de un Área</a>
-        <a href="javascript:void(0);" onclick="mostrarCumpleaños()">Cumpleaños</a>
+        <details>
+            <summary>Directorio</summary>
+            <a href="javascript:void(0);" onclick="buscarEmpleado()">Datos de un Empleado</a>
+            <a href="javascript:void(0);" onclick="buscarPorArea()">Datos de un Área</a>
+        </details>
+        <details>
+            <summary>Cumpleaños</summary>
+            <a href="javascript:void(0);" onclick="buscarCumpleañosPorFecha()">Fecha de Interés</a>
+            <a href="javascript:void(0);" onclick="mostrarCumpleaños()">Cumpleaños</a>
+        </details>
     </div>
-    
+
+    <!-- Botón para mostrar/ocultar Sidebar -->
+    <button id="toggle-sidebar" onclick="toggleSidebar()">◀</button>
 
     <!-- Header -->
     <div class="header">
-        <div class="title">Recursos Humanos</div>
+        <div class="title">Sistema de Gestión de Recursos Humanos</div>
+        <!-- USER BOX -->
         <div class="user-box">
-            <img src="logo.png" alt="Admin">
-            <div>
-                <span>Mauricio Sevilla</span><br>
-                <small>admin</small>
+            <div class="user-content">
+                <img src="logo.png" alt="Admin" class="user-img">
+                <div>
+                    <span>Mauricio Sevilla</span><br>
+                    <small>admin</small>
+                </div>
+                <!-- Flecha hacia abajo -->
+                <details class="dropdown">
+                    <summary></summary>
+                    <!-- Menú desplegable -->
+                    <ul class="dropdown-menu user-dropdown">
+                        <li><a class="dropdown-item" href="#">Ver Perfil</a></li>
+                        <li><a class="dropdown-item" href="#">Cerrar Sesión</a></li>
+                    </ul>
+                </details>
             </div>
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                    Opciones
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="userMenu">
-                    <li><a class="dropdown-item" href="#">Ver Perfil</a></li>
-                    <li><a class="dropdown-item" href="#">Cerrar Sesión</a></li>
-                </ul>
-            </div>
-        </div>
+         </div>
     </div>
 
     <!-- Content -->
@@ -45,49 +59,50 @@
             <h2>Bienvenido al Sistema de Recursos Humanos</h2>
             <p>Seleccione una opción del menú para empezar.</p>
         </div>
-        <div id="resultado" class="menu-box mt-3">
-            <!-- Aquí se mostrarán los resultados -->
-        </div>
+        <div id="resultado" class="menu-box mt-3"></div>
     </div>
 
     <!-- Templates -->
-    <template id="template-buscar-Empleado">
-        <h3>Buscar Empleado</h3>
-        <label for="criterio">Buscar por:</label>
-        <select id="criterio" class="form-select" onchange="mostrarCamposBusqueda()">
+    <template id="template-buscar-empleado">
+        <h3 class="mb-3">Buscar Empleado</h3>
+        <label for="criterio" class="form-label">Buscar por:</label>
+        <select id="criterio" class="form-select mb-3" onchange="mostrarCamposBusqueda()">
             <option value="cedula">Cédula</option>
             <option value="nombre">Nombre</option>
         </select>
-        <div id="campo-busqueda"></div>
-        <button class="btn btn-primary mt-2" onclick="consultarEmpleado()">Buscar</button>
-    </template>    
+        <div id="campo-busqueda" class="mb-3">
+            <!-- Este espacio será dinámicamente llenado por mostrarCamposBusqueda() -->
+            <label for="cedula">Cédula:</label>
+            <input type="text" id="cedula" class="form-control" placeholder="Ingrese la cédula">
+        </div>
+        <button class="btn btn-primary" onclick="consultarEmpleado()">Buscar</button>
+    </template>
+
     <template id="template-buscar-area">
-        <h3>Buscar Empleados de un Área</h3>
+        <h3>Buscar Empleados por Área</h3>
         <label for="area">Seleccione un Área:</label>
-        <select id="area" class="form-select">
-            <!-- Opciones dinámicas generadas por JavaScript -->
+        <select id="area" class="form-select mt-2">
+            <!-- Opciones generadas dinámicamente -->
         </select>
-        <button class="btn btn-primary mt-2" onclick="consultarPorArea()">Buscar</button>
+        <button class="btn btn-primary mt-3" onclick="consultarPorArea()">Buscar</button>
     </template>
 
     <template id="template-buscar-cumpleanos">
-        <h3>Buscar Cumpleaños de un Empleado</h3>
+        <h3>Buscar Cumpleaños</h3>
         <label for="criterioCumple">Buscar por:</label>
-        <select id="criterioCumple" class="form-select" onchange="mostrarCamposCumpleBusqueda()">
+        <select id="criterioCumple" class="form-select mt-2" onchange="mostrarCamposCumpleBusqueda()">
             <option value="cedula">Cédula</option>
             <option value="nombre">Nombre</option>
         </select>
-        <div id="campo-cumple-busqueda"></div>
-        <button class="btn btn-primary mt-2" onclick="consultarCumpleañosEmpleado()">Buscar</button>
+        <div id="campo-cumple-busqueda" class="mt-3"></div>
+        <button class="btn btn-primary mt-3" onclick="consultarCumpleañosEmpleado()">Buscar</button>
     </template>
 
     <template id="template-buscar-cumpleanos-fecha">
-        <h4 class="text-warning">Buscar Cumpleaños en una Fecha</h4>
-        <div class="mb-3">
-            <label for="fechaCumple" class="form-label">Fecha:</label>
-            <input type="date" id="fechaCumple" class="form-control">
-        </div>
-        <button class="btn btn-primary" onclick="consultarCumpleañosPorFecha()">Buscar</button>
+        <h3>Buscar Cumpleaños por Fecha</h3>
+        <label for="fechaCumple" class="form-label mt-2">Fecha:</label>
+        <input type="date" id="fechaCumple" class="form-control mt-2">
+        <button class="btn btn-primary mt-3" onclick="consultarCumpleañosPorFecha()">Buscar</button>
     </template>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
